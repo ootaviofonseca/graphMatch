@@ -1,0 +1,68 @@
+# Python
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Ambientes virtuais
+
+venv/
+env/
+ENV/
+*.venv/
+
+# Pacotes instalados
+
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+sdist/
+wheels/
+*.manifest
+*.spec
+
+# Logs e arquivos temporários
+
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.orig
+*.pid
+*.seed
+*.cover
+*.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.sqlite3
+
+# PyInstaller
+# Arquivos criados pelo PyInstaller
+*.manifest
+*.spec
+dist/
+build/
+
+# IDEs e editores
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.ropeproject/
+
+# MacOS
+####################
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
