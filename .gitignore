@@ -6,12 +6,15 @@ __pycache__/
 *.pyd
 *.so
 
-# Ambientes virtuais
-
+# Ambientes virtuais e outros
+.env
+/.env 
 venv/
 env/
 ENV/
 *.venv/
+visEval_dataset/
+teste/
 
 # Pacotes instalados
 
@@ -66,3 +69,5 @@ build/
 # Windows
 Thumbs.db
 Desktop.ini
+
+
