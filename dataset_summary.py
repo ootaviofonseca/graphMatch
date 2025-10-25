@@ -24,12 +24,11 @@ class DataSetSummary:
     
         return df[safe_columns].dropna(how='all')
     
-    def csv_read(self, path):
-        self.df = pd.read_csv(path)
-        self.ignore_sensitive_patterns(df)
+    
  
-    def summarize(self, path):
-        
+    def summarize(self):  
+        self.df = pd.read_csv( self.path)
+        self.df  = self._ignore_sensitive_patterns(self.df)
 
         colls_names = self.df.columns.values
         lines_num, colls_num = self.df.shape
@@ -52,9 +51,9 @@ class DataSetSummary:
         """
         return summary
 
-    #Agora devo ignorar os dados irrelevantes, as coluans no caso
-if __name__ == "__main__":
+    
+"""if __name__ == "__main__":
     path = "visEval_dataset/databases/activity_1/Student.csv"
     dataset_summary = DataSetSummary(path)
-    dataset_summary.csv_read(path)
-    print( dataset_summary.summarize())
+    #dataset_summary.csv_read(path)
+    print( dataset_summary.summarize())"""
