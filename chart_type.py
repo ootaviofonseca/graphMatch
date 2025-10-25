@@ -111,7 +111,7 @@ class ChartType:
                 best_chart = atualMatch["chart"]
                 best_token = token
         
-        print(f"✅ Melhor token: '{best_token}' → {best_chart.upper()} ({best_score}%)")
+        print(f"Melhor token: '{best_token}' → {best_chart.upper()} ({best_score}%)")
         
 
         if len(perfect_matches) > 1:
