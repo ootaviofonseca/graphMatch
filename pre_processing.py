@@ -3,7 +3,7 @@ import string
 
 class PreProcessing:
     def __init__(self):
-        pass
+        self.query = ""
 
     def __normalize(self, text: str) -> str:
         """Internal method: normalizes the text"""
@@ -15,6 +15,7 @@ class PreProcessing:
         text = re.sub(f"[{re.escape(string.punctuation)}]", "", text)
         text = re.sub(r"\s+", " ", text)
 
+        self.query = text
         return text
 
     def tokenizes(self, text: str) -> list[str]:
