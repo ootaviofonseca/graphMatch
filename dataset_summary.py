@@ -34,21 +34,16 @@ class DataSetSummary:
         lines_num, colls_num = self.df.shape
         coll_types = self.df.dtypes
 
-        summary = "The input dataframe has the following number of rows and columns: " + str(lines_num) + "x" + str(colls_num) + "\n" \
-          "It has the following column names: " + str(colls_names) + "\n" \
-          "And the data types for each column are: " + str(coll_types)
+        #Get 2 randam lines in dataframe
+        data_examples = self.df.sample(n=min(2, len(self.df)))
 
-        print(summary)
+        summary = "The input dataframe has the following number of rows and columns: " + str(lines_num) + "x" + str(colls_num) + "\n" \
+            "It has the following column names: " + str(colls_names) + "\n" \
+            "And the data types for each column are: " + str(coll_types)+ "\n" \
+            "And these are 2 example rows from the dataframe " + str(data_examples)+ "\n" \
+
+        #print(summary)
         
-        """print("Resumo do DataFrame")
-        print("-" * 40)
-        print(f"Linhas: {lines_num}")
-        print(f"Colunas: {colls_num}")
-        print("\nNome das colunas:")
-        print(colls_names)
-        print("\nTipos de colunas:")
-        print(coll_types)
-        """
         return summary
 
     
