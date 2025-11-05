@@ -14,7 +14,7 @@ def execute_code(code: str) -> str:
     """
 
     import subprocess
-
+    import glob
     # Creates a command that runs Python and reads the code from the string
     process = subprocess.Popen(
         [sys.executable, "-c", code],  # The '-c'option allows passing code as a string
@@ -25,11 +25,143 @@ def execute_code(code: str) -> str:
 
     # Espera o processo terminar e captura saída e erros
     stdout, stderr = process.communicate()
+    
+    #Path where images are saved
+    results_dir = os.path.abspath("results")
+
+    # Searches for the most recent PNG file inside the results folder
+    png_files = glob.glob(os.path.join(results_dir, "grafico_*.png"))
+    latest_png = max(png_files, key=os.path.getmtime) if png_files else None
+
     if process.returncode == 0:
-        return f"Code executed successfully, output: {stdout}"
+        return latest_png
     else:
         return f"The code produced the following errors: {stderr}"
+       
+def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> str:
 
+    base = (f"You are a coding assistant specialized in data visualization using Altair. "
+            f"Generate only the Python code that creates an Altair chart of type {chart_type} "
+            f"If {chart_type} is empty, choose the type of chart that best fits the question. "
+            f"If {chart_type} contains multiple elements, select one appropriate chart type. "
+            f"This chart should answer the user’s question: {question}. "
+            f"You are given a brief description of the dataframe: {summary}. "
+            f"The generated code must follow this structure: the imports, the path to the CSV, and the svg export must remain the same. "
+            f"However, you should adjust any attributes, columns, encodings, or other chart-specific parameters as needed for the chart type, "
+            f"since different chart types require different configurations.\n\n"
+            f"import altair as alt\n"
+            f"import pandas as pd\n"
+            f"import os\n"
+            f"import uuid\n\n"
+            f"path = r'{path}'\n"
+            f"data = pd.read_csv(path)\n\n"
+            )
+    if len(chart_type) > 1:
+        base += (
+            f"# Create a chart\n"
+            f"# You may adjust the encodings (like x, y, color, size, theta, etc.) "
+            f"and other attributes as needed depending on the chart type.\n"
+            f"# Do not change the import statements, path handling, or export structure.\n"
+            f"# If multiple chart types are available (line, scatter, arc, boxplot, bar), "
+            f"select the most appropriate chart type for the question.\n\n"
+            f"# Reference for chart marks (select only those necessary):\n"
+            f"Arc -> mark_arc()         # A pie chart\n"
+            f"Bar -> mark_bar()         # A bar plot\n"
+            f"Line -> mark_line()       # A line plot\n"
+            f"Scatter -> mark_circle()   # A scatter plot with filled circles (for scatter)\n"
+            f"Boxplot -> mark_rect()       # Can be used for boxplot or heatmap\n\n"
+            f"chart = alt.Chart(data).mark_<chart_type>().encode(\n"
+            f"    # Adjust these encodings to match the dataset and selected chart type\n"
+            f"    # Example: x='column_name:Q', y='column_name:N', color='category:N', theta='value:Q', etc.\n"
+            f").properties(\n"
+            f"    title='Your Chart Title Here'\n"
+            f")\n\n"
+        )
+    elif chart_type[0]== "line":
+        base += (
+            f"# Create a line chart\n"
+            f"# The agent can modify or add encodings, attributes, and formats (like color, size, tooltip, etc.)\n"
+            f"# but the chart type must remain a line chart: mark_line()\n"
+            f"chart = alt.Chart(data).mark_line().encode(\n"
+            f"    x='x',       # can be changed to the column representing the x-axis\n"
+            f"    y='f(x)',    # can be changed to the column representing the y-axis\n"
+            f"    # Additional encodings can be added here, e.g., color='category:N', tooltip=['x','f(x)']\n"
+            f").properties(\n"
+            f"    title='Your Chart Title Here'  # Can change the title\n"
+            f"    # Other properties can be added here, e.g., width=600, height=400\n"
+            f")\n"
+        )
+    elif chart_type[0] == "bar":
+        base += (f"# Create a bar chart with labels\n"
+            f"# The agent can modify or add encodings, attributes, and formats (like color, size, tooltip, etc.)\n"
+            f"# The chart type must remain a bar chart with optional text labels\n"
+            f"base = alt.Chart(data).encode(\n"
+            f"    x='<x_column>',     # Change to the column representing the x-axis values\n"
+            f"    y='<y_column>:O',   # Change to the column representing the y-axis (ordinal) categories\n"
+            f"    text='<text_column>' # Change to the column containing values to show on bars\n"
+            f")\n"
+            f"base.mark_bar() + base.mark_text(\n"
+            f"    align='left',       # Can adjust alignment\n"
+            f"    dx=2                # Can adjust offset\n"
+            f")\n"
+            f"# The agent can add additional encodings or properties as needed (e.g., color, tooltip, size, width, height)")
+    elif chart_type[0] == "arc":
+        base += (
+            f"# Create a pie chart\n"
+            f"# The agent can modify or add encodings, attributes, and formats (like color, tooltip, size, etc.)\n"
+            f"# The chart type must remain a pie chart: mark_arc()\n"
+            f"chart = alt.Chart(data).mark_arc().encode(\n"
+            f"    theta='<value_column>',   # Change to the column representing the numeric values\n"
+            f"    color='<category_column>' # Change to the column representing the categories\n"
+            f"    # Additional encodings can be added here, e.g., tooltip=['<value_column>','<category_column>']\n"
+            f")\n"
+            f"# The agent can add additional properties as needed (e.g., innerRadius, sort, labels, width, height)"
+        )
+    elif chart_type[0] == "scatter":
+        base += (
+            f"# Create a scatter plot\n"
+            f"# The agent can modify or add encodings, attributes, and formats (like color, size, tooltip, shape, etc.)\n"
+            f"# The chart type must remain a scatter plot: mark_point() or mark_circle() or mark_square() as needed\n"
+            f"chart = alt.Chart(data).mark_point().encode(\n"
+            f"    x='<x_column>',          # Change to the column representing the x-axis values\n"
+            f"    y='<y_column>',          # Change to the column representing the y-axis values\n"
+            f"    color='<color_column>',  # Optional: column for color encoding\n"
+            f"    size='<size_column>'     # Optional: column for size encoding\n"
+            f"    # Additional encodings can be added here, e.g., tooltip=['<x_column>','<y_column>']\n"
+            f")\n"
+            f"# The agent can add additional properties as needed (e.g., shape, width, height, opacity)"
+
+        )
+    elif chart_type[0] == "boxplot":
+        base += (
+            f"# Create a boxplot\n"
+            f"# The agent can modify or add encodings, attributes, and formats (like color, tooltip, size, etc.)\n"
+            f"# The chart type must remain a boxplot: mark_boxplot()\n"
+            f"chart = alt.Chart(data).mark_boxplot().encode(\n"
+            f"    x='<x_column>',          # Change to the column representing the categorical axis\n"
+            f"    y='<y_column>',          # Change to the column representing the numeric values\n"
+            f"    color='<color_column>'   # Optional: column for color encoding\n"
+            f"    # Additional encodings can be added here, e.g., tooltip=['<x_column>','<y_column>']\n"
+            f")\n"
+            f"# The agent can add additional properties as needed (e.g., width, height, opacity, extent)"
+
+        )
+
+    base += (
+        f"# Ensure the results folder exists and save the chart as SVG with a unique name\n"
+        f"os.makedirs('results', exist_ok=True)\n"
+        f"#Keep the format name"
+        f"filename = f'results/chart_{{uuid.uuid4().hex}}.svg'\n"
+        f"chart.save(filename)\n\n"
+        f"The agent should NOT read any dataframe from the environment; "
+        f"just use the fixed path in the code. "
+        f"The structure of the chart may change depending on the chart type, imports, chart object, PNG conversion, and saving with a unique filename must always remain."
+        f"The agent is allowed to style the chart creatively in any way it finds interesting."
+    )
+
+    return base
+
+    
 class ChartGeneratorAgent:
 
     def __init__(self):
@@ -43,7 +175,7 @@ class ChartGeneratorAgent:
             raise ValueError("OPENAI_API_KEY not found in .env file")
 
         # Defining the model and creating the agent tat create the code
-        self.model =  ChatOpenAI(model="gpt-3.5-turbo",  openai_api_key=api_key)
+        self.model =  ChatOpenAI(model="gpt-3.5-turbo",  openai_api_key=api_key, temperature=0.3)
         self.code_generator = create_agent(
             model=self.model,
         )
@@ -52,54 +184,25 @@ class ChartGeneratorAgent:
         self.code_tester = create_agent(
             model=self.model,
             tools=[execute_code],
-            system_prompt= ("You receive the code and execute it using the tool. "
-                "If errors occur, correct them and run it again. "
-                "If the error persists more than three times, stop and return a message stating "
-                "that the code presented errors and print the errors."
+            system_prompt= (
+                "You receive Python code and execute it using the tool. "
+                "Do NOT try to correct the code if there are errors. "
+                "Just execute it and return either the output or the error message."
             )
         )
 
         # Parser to standardize the output
         self.parser = StrOutputParser()
 
-    def generate_code(self, chart_type: str, question: str, summary: str) -> str:
+    def generate_code(self, chart_type: str, question: str, summary: str, path: str) -> str:
         
-        prompt = (
-            f"You are a coding assistant specialized in data visualization using Altair. "
-            f"Generate only the Python code that creates an Altair chart of type {chart_type} "
-            f"that answers the user’s question: {question}. "
-            f"You are given a brief description of the dataframe: {summary}. "
-            f"The generated code must follow this format (values, columns, and chart type can vary, but keep the structure):\n\n"
-            f"import altair as alt\n"
-            f"import pandas as pd\n"
-            f"import vl_convert as vlc\n"
-            f"import os\n"
-            f"import uuid\n\n"
-            f"path = 'visEval_dataset/databases/activity_1/Student.csv'\n"
-            f"data = pd.read_csv(path)\n\n"
-            f"# Create a chart\n"
-            f"chart = alt.Chart(data).mark_<chart_type>().encode(\n"
-            f"    x='<x_column>:<type>',\n"
-            f"    y='<y_column>:<type>',\n"
-            f").properties(\n"
-            f"    title='<chart_title>'\n"
-            f")\n\n"
-            f"# Convert the chart to PNG\n"
-            f"png_bytes = vlc.vegalite_to_png(chart.to_dict())\n\n"
-            f"# Ensure the results folder exists and save the PNG with a unique name\n"
-            f"os.makedirs('results', exist_ok=True)\n"
-            f"filename = f'results/grafico_{{uuid.uuid4().hex}}.png'\n"
-            f"with open(filename, 'wb') as f:\n"
-            f"    f.write(png_bytes)\n\n"
-            f"The agent should NOT read any dataframe from the environment; "
-            f"just use the fixed path in the code. "
-            f"The structure of the chart may change depending on the chart type, but the path, imports, chart object, PNG conversion, and saving with a unique filename must always remain."
-        )
-
+        prompt = dynamic_prompt(chart_type, question, summary, path)
+            
         result = self.code_generator.invoke({
             "messages": [{"role": "user", "content": prompt}]
         })
 
+        
         #Extract only the code part from the agent's response
         response = self.parser.invoke(result["messages"][-1])
     
@@ -107,16 +210,17 @@ class ChartGeneratorAgent:
         return response
     
         
-    def generate_and_test_code(self, chart_type: str, question: str, summary: str) -> str:
+    def generate_and_test_code(self, chart_type: str, question: str, summary: str,  path: str ) -> str:
             """
             Full workflow: generate code → execute → correct if there is an error.
             """
             
-            code = self.generate_code(chart_type, question, summary)
+            code = self.generate_code(chart_type, question, summary, path)
             
             test_result = self.code_tester.invoke({
                 "messages": [{"role": "user", "content": code}]
             })
             
+            print(test_result)
             return self.parser.invoke(test_result["messages"][-1])
 
