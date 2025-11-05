@@ -38,17 +38,18 @@ def execute_code(code: str) -> str:
     else:
         return f"The code produced the following errors: {stderr}"
        
-def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> str:
+def dynamic_prompt(chart_type, question: str, summary: str, path: str)-> str:
 
-    base = (f"You are a coding assistant specialized in data visualization using Altair. "
-            f"Generate only the Python code that creates an Altair chart of type {chart_type} "
-            f"If {chart_type} is empty, choose the type of chart that best fits the question. "
-            f"If {chart_type} contains multiple elements, select one appropriate chart type. "
+    base = (
+            f"You must create a chart of type {chart_type}"
+            f"If {chart_type} is empty, you must analyze the {question} and {summary} and determine which chart type should be used."
+            f"If there is more than one option, choose the one that makes the most sense."
             f"This chart should answer the user’s question: {question}. "
-            f"You are given a brief description of the dataframe: {summary}. "
-            f"The generated code must follow this structure: the imports, the path to the CSV, and the svg export must remain the same. "
-            f"However, you should adjust any attributes, columns, encodings, or other chart-specific parameters as needed for the chart type, "
-            f"since different chart types require different configurations.\n\n"
+            f"You are given a brief description of the dataframe: {summary}. This summary helps you understand how to organize the data for each chart type and which data to use for the charts."
+            f"The code must follow the structure below. You should keep only the imports, the part where the CSV and its path are assigned, and the output format."
+            f"The chart part is up to you — there’s an example code you may follow or not, but you must always adhere to Altair’s properties for each chart type.\n"
+            f"Pay close attention to the format of the fields for each chart type to avoid creating a meaningless chart.\n"
+            f"The agent is allowed to style the chart creatively in any way it finds interesting.\n\n"
             f"import altair as alt\n"
             f"import pandas as pd\n"
             f"import os\n"
@@ -56,14 +57,13 @@ def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> st
             f"path = r'{path}'\n"
             f"data = pd.read_csv(path)\n\n"
             )
+    
     if len(chart_type) > 1:
         base += (
             f"# Create a chart\n"
             f"# You may adjust the encodings (like x, y, color, size, theta, etc.) "
-            f"and other attributes as needed depending on the chart type.\n"
-            f"# Do not change the import statements, path handling, or export structure.\n"
-            f"# If multiple chart types are available (line, scatter, arc, boxplot, bar), "
-            f"select the most appropriate chart type for the question.\n\n"
+            f"and other attributes as needed depending on the chart type."
+            f"Select the most appropriate chart type for the question.\n\n"
             f"# Reference for chart marks (select only those necessary):\n"
             f"Arc -> mark_arc()         # A pie chart\n"
             f"Bar -> mark_bar()         # A bar plot\n"
@@ -80,8 +80,6 @@ def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> st
     elif chart_type[0]== "line":
         base += (
             f"# Create a line chart\n"
-            f"# The agent can modify or add encodings, attributes, and formats (like color, size, tooltip, etc.)\n"
-            f"# but the chart type must remain a line chart: mark_line()\n"
             f"chart = alt.Chart(data).mark_line().encode(\n"
             f"    x='x',       # can be changed to the column representing the x-axis\n"
             f"    y='f(x)',    # can be changed to the column representing the y-axis\n"
@@ -93,8 +91,6 @@ def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> st
         )
     elif chart_type[0] == "bar":
         base += (f"# Create a bar chart with labels\n"
-            f"# The agent can modify or add encodings, attributes, and formats (like color, size, tooltip, etc.)\n"
-            f"# The chart type must remain a bar chart with optional text labels\n"
             f"base = alt.Chart(data).encode(\n"
             f"    x='<x_column>',     # Change to the column representing the x-axis values\n"
             f"    y='<y_column>:O',   # Change to the column representing the y-axis (ordinal) categories\n"
@@ -105,11 +101,10 @@ def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> st
             f"    dx=2                # Can adjust offset\n"
             f")\n"
             f"# The agent can add additional encodings or properties as needed (e.g., color, tooltip, size, width, height)")
-    elif chart_type[0] == "arc":
+    elif chart_type[0] == "arc" :
+        
         base += (
             f"# Create a pie chart\n"
-            f"# The agent can modify or add encodings, attributes, and formats (like color, tooltip, size, etc.)\n"
-            f"# The chart type must remain a pie chart: mark_arc()\n"
             f"chart = alt.Chart(data).mark_arc().encode(\n"
             f"    theta='<value_column>',   # Change to the column representing the numeric values\n"
             f"    color='<category_column>' # Change to the column representing the categories\n"
@@ -120,8 +115,6 @@ def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> st
     elif chart_type[0] == "scatter":
         base += (
             f"# Create a scatter plot\n"
-            f"# The agent can modify or add encodings, attributes, and formats (like color, size, tooltip, shape, etc.)\n"
-            f"# The chart type must remain a scatter plot: mark_point() or mark_circle() or mark_square() as needed\n"
             f"chart = alt.Chart(data).mark_point().encode(\n"
             f"    x='<x_column>',          # Change to the column representing the x-axis values\n"
             f"    y='<y_column>',          # Change to the column representing the y-axis values\n"
@@ -135,8 +128,6 @@ def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> st
     elif chart_type[0] == "boxplot":
         base += (
             f"# Create a boxplot\n"
-            f"# The agent can modify or add encodings, attributes, and formats (like color, tooltip, size, etc.)\n"
-            f"# The chart type must remain a boxplot: mark_boxplot()\n"
             f"chart = alt.Chart(data).mark_boxplot().encode(\n"
             f"    x='<x_column>',          # Change to the column representing the categorical axis\n"
             f"    y='<y_column>',          # Change to the column representing the numeric values\n"
@@ -153,14 +144,10 @@ def dynamic_prompt(chart_type: str, question: str, summary: str, path: str)-> st
         f"#Keep the format name"
         f"filename = f'results/chart_{{uuid.uuid4().hex}}.svg'\n"
         f"chart.save(filename)\n\n"
-        f"The agent should NOT read any dataframe from the environment; "
-        f"just use the fixed path in the code. "
-        f"The structure of the chart may change depending on the chart type, imports, chart object, PNG conversion, and saving with a unique filename must always remain."
-        f"The agent is allowed to style the chart creatively in any way it finds interesting."
+        f"The agent should NOT read any dataframe from the environment, just use the fixed path in the code." 
     )
 
     return base
-
     
 class ChartGeneratorAgent:
 
@@ -177,6 +164,9 @@ class ChartGeneratorAgent:
         # Defining the model and creating the agent tat create the code
         self.model =  ChatOpenAI(model="gpt-3.5-turbo",  openai_api_key=api_key, temperature=0.3)
         self.code_generator = create_agent(
+            system_prompt= (
+                "You are a developer specialized in data visualization using Python and Altair."
+            ),
             model=self.model,
         )
 
@@ -194,15 +184,14 @@ class ChartGeneratorAgent:
         # Parser to standardize the output
         self.parser = StrOutputParser()
 
-    def generate_code(self, chart_type: str, question: str, summary: str, path: str) -> str:
+    def generate_code(self, chart_type, question: str, summary: str, path: str) -> str:
         
         prompt = dynamic_prompt(chart_type, question, summary, path)
             
         result = self.code_generator.invoke({
             "messages": [{"role": "user", "content": prompt}]
         })
-
-        
+ 
         #Extract only the code part from the agent's response
         response = self.parser.invoke(result["messages"][-1])
     
@@ -210,7 +199,7 @@ class ChartGeneratorAgent:
         return response
     
         
-    def generate_and_test_code(self, chart_type: str, question: str, summary: str,  path: str ) -> str:
+    def generate_and_test_code(self, chart_type, question: str, summary: str,  path: str ) -> str:
             """
             Full workflow: generate code → execute → correct if there is an error.
             """
@@ -221,6 +210,6 @@ class ChartGeneratorAgent:
                 "messages": [{"role": "user", "content": code}]
             })
             
-            print(test_result)
+            #print(test_result)
             return self.parser.invoke(test_result["messages"][-1])
 

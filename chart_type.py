@@ -100,6 +100,7 @@ explicit_refs = {
         "data spread chart", "outlier chart", "interquartile range chart"
     ]
 }
+
 from pre_processing import PreProcessing
 from rapidfuzz import process, fuzz
 from nltk.util import ngrams
@@ -108,7 +109,7 @@ class ChartType:
         pass
 
     def __explicit_reference(self, query):
-        for chart, patterns in self.explicit_refs.items():
+        for chart, patterns in explicit_refs.items():
             for term in patterns:
                 if term in query:
                     return chart  # tipo de gráfico explicitamente citado
@@ -146,6 +147,8 @@ class ChartType:
         """
         Finds the best chart type or the possible top options (if more than one option is needed as a result)
         """
+        # Array containing the possible chart(s)
+        perfect_matches = []
 
         # Performs preprocessing on the query and extracts the tokens
         preProcessor = PreProcessing()
@@ -155,7 +158,8 @@ class ChartType:
         explicit = self.__explicit_reference(preProcessor.query)
         if explicit:
             print(f"Explicit chart mention detected: {explicit.upper()}")
-            return explicit
+            perfect_matches.append(explicit)
+            return perfect_matches
 
         # Creates bigrams and trigrams to improve the accuracy of chart predictions
         bigrams = [" ".join(gram) for gram in ngrams(tokens, 2)]
@@ -173,9 +177,6 @@ class ChartType:
         best_chart = None
         best_token = None
 
-        # Array containing the possible chart(s)
-        perfect_matches = []
-
         # Iterates through all tokens and checks their matches
         for token in all_tokens:
             atualMatch =  self.__matching(token)
@@ -185,7 +186,7 @@ class ChartType:
             
             # If the score is greater than 100, save it in perfect_matches (can exists more than one)
             if score == 100:
-                perfect_matches.append({"token": token, "chart":  atualMatch["chart"]})
+                perfect_matches.append(atualMatch["chart"])
 
             # Compares the score in each iteration with the highest one to find the best at the end
             if  score > best_score:               
@@ -202,7 +203,7 @@ class ChartType:
         
         # If there is no perfect match (100%), add the highest score to the array (> 85)
         if len(perfect_matches) == 0 and best_score > 85:
-            perfect_matches.append({"token": best_token, "chart": best_chart})
+            perfect_matches.append( best_chart)
         
         print(f"Melhor token: {perfect_matches}")
         # Returns the match or matches
