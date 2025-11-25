@@ -90,7 +90,7 @@ explicit_refs = {
         "part-to-whole chart", "breakdown chart", "relative share chart", "a pie", "pie"
     ],
     "scatter": [
-        "scatter plot", "dot plot", "scatter diagram", "bivariate plot",
+        "scatter plot", "dot plot", "scatter diagram", "bivariate plot","scatter chart"
         "relationship chart", "correlation chart", "variable interaction chart",
         "data dispersion chart", "x vs y plot", "y vs x plot", "joint distribution chart"
     ],
@@ -199,7 +199,7 @@ class ChartType:
         if len(perfect_matches) > 1:
             print("\n Mais de um token com 100% de correspondência!")
             for match in perfect_matches:
-                print(f" → Token '{match['token']}' → {match['chart'].upper()}")
+                print(f" → CHART → {match.upper()}")
         
         # If there is no perfect match (100%), add the highest score to the array (> 85)
         if len(perfect_matches) == 0 and best_score > 85:
