@@ -194,10 +194,12 @@ class ChartType:
                 best_chart = atualMatch["chart"]
                 best_token = token
         
-        #print(f"Melhor token: '{best_token}' → {best_chart.upper()} ({best_score}%)")
+        #Uncomment to print the best token found
+        #print(f"Best token: '{best_token}' → {best_chart.upper()} ({best_score}%)")
         
         if len(perfect_matches) > 1:
-            print("\n Mais de um token com 100% de correspondência!")
+            #Uncomment to print when more than one perfect match is found
+            #print("\n More than one token with 100% match!")
             for match in perfect_matches:
                 print(f" → CHART → {match.upper()}")
         
@@ -205,7 +207,8 @@ class ChartType:
         if len(perfect_matches) == 0 and best_score > 85:
             perfect_matches.append( best_chart)
         
-        print(f"Melhor token: {perfect_matches}")
+        #Uncomment to always return the best match
+        #print(f"Best token: {perfect_matches}")
         # Returns the match or matches
         return perfect_matches
         
