@@ -17,6 +17,8 @@ visEval_dataset/
 teste/
 extras/
 results/
+teste1/
+logs/
 
 # Pacotes instalados
 
@@ -71,5 +73,8 @@ build/
 # Windows
 Thumbs.db
 Desktop.ini
+
+
+#
 
 
